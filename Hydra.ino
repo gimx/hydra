@@ -138,6 +138,7 @@
 // Don't use 0 or 1 because that's the value of LOW and HIGH.
 #define HALF                    3
 #define FULL                    4
+#define DCOM                    5
 
 #define STATE_A                 1
 #define STATE_B                 2
@@ -397,6 +398,7 @@ static inline const char *logic_str(unsigned int state) {
     case HIGH: return "HIGH";
     case HALF: return "HALF";
     case FULL: return "FULL";
+    case DCOM: return "DCOM";
     default: return "UNKNOWN";
   }
 }
@@ -595,6 +597,9 @@ void setPilot(unsigned int car, unsigned int which) {
     // This is what the pwm library does anyway.
     log(LOG_TRACE, P("Pin %d to digital %d"), pin, which);
     digitalWrite(pin, which);
+  }
+  else if (1){//FIXME (which == DCOM){
+    digitalWrite(pin,12);   
   }
   else {
     unsigned long ma = incomingPilotMilliamps;
