@@ -1,4 +1,4 @@
-/*
+  /*
 
  J1772 Hydra for Arduino
  Copyright 2013 Nicholas W. Sayer
@@ -20,11 +20,11 @@
 
 #include <avr/wdt.h>
 #include <Wire.h>
-#include <LiquidTWI2.h>
+#include <LiquidCrystal_I2C.h>
 #include <PWM.h>
 #include <EEPROM.h>
 
-#define LCD_I2C_ADDR 0x20 // for adafruit shield or backpack
+#define LCD_I2C_ADDR 0x27 // for adafruit shield or backpack
 
 // By historical accident, car B is actually
 // the lower pin number in most cases.
@@ -194,11 +194,11 @@
 
 // This is the current limit (in milliamps) of all of the components on the inlet side of the hydra -
 // the inlet itself, any fuses, and the wiring to the common sides of the relays.
-#define MAXIMUM_INLET_CURRENT 75000
+#define MAXIMUM_INLET_CURRENT 30000
 
 // This is the minimum of the ampacity (in milliamps) of all of the components from the relay to the plug -
 // The relay itself, the J1772 cable and plug.
-#define MAXIMUM_OUTLET_CURRENT 30000
+#define MAXIMUM_OUTLET_CURRENT 24000
 
 // This can not be lower than 12, because the J1772 spec bottoms out at 6A.
 // The hydra won't operate properly if it can't divide the incoming power in half. (in milliamps)
@@ -251,9 +251,9 @@
 // Each count of the A/d converter is 4.882 mV (5/1024). V/A divided by V/unit is unit/A. For the reference
 // design, that's 9.46. But we want milliamps per unit, so divide that into 1000. Round up to get...
 // RB = 56: Original reference design
-//#define CURRENT_SCALE_FACTOR 89
+#define CURRENT_SCALE_FACTOR 89
 // RB = 47: Current reference design
-#define CURRENT_SCALE_FACTOR 106
+//#define CURRENT_SCALE_FACTOR 106
 
 #define LOG_NONE 0
 #define LOG_INFO 1
@@ -309,7 +309,7 @@ char p_buffer[96];
 
 #define VERSION "2.3 (Splitter)"
 
-LiquidTWI2 display(LCD_I2C_ADDR, 1);
+LiquidCrystal_I2C display(LCD_I2C_ADDR, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 unsigned long incoming_pilot_samples[ROLLING_AVERAGE_SIZE];
 unsigned long car_a_current_samples[ROLLING_AVERAGE_SIZE], car_b_current_samples[ROLLING_AVERAGE_SIZE];
@@ -517,7 +517,7 @@ void error(unsigned int car, char err) {
     car_b_request_time = 0;
   }
   
-  display.setBacklight(RED);
+  //display.setBacklight(RED);
   if (car == BOTH || car == CAR_A) {
     display.setCursor(0, 1);
     display.print(P("A:ERR "));
@@ -595,7 +595,7 @@ void setPilot(unsigned int car, unsigned int which) {
     // This is what the pwm library does anyway.
     log(LOG_TRACE, P("Pin %d to digital %d"), pin, which);
     digitalWrite(pin, which);
-  } 
+  }
   else {
     unsigned long ma = incomingPilotMilliamps;
     if (which == HALF) ma /= 2;
@@ -749,7 +749,7 @@ void pollIncomingPilot() {
 
 }
 
-void sequential_mode_transition(unsigned int us, unsigned int car_state) {
+void z   unsigned int us, unsigned int car_state) {
   unsigned int them = (us == CAR_A)?CAR_B:CAR_A;
   unsigned int *last_car_state = (us == CAR_A)?&last_car_a_state:&last_car_b_state;
   unsigned int their_state = (us == CAR_A)?last_car_b_state:last_car_a_state;
@@ -916,6 +916,9 @@ void shared_mode_transition(unsigned int us, unsigned int car_state) {
 }
 
 unsigned int checkEvent() {
+  return EVENT_NONE;
+
+#if 0
   log(LOG_TRACE, P("Checking for button event"));
   if (button_debounce_time != 0 && millis() - button_debounce_time < BUTTON_DEBOUNCE_INTERVAL) {
     // debounce is in progress
@@ -949,6 +952,7 @@ unsigned int checkEvent() {
       return EVENT_SHORT_PUSH;
     }
   }
+  #endif
 }
 
 void setup() {
@@ -957,7 +961,7 @@ void setup() {
   wdt_enable(WDTO_1S);
 
   InitTimersSafe();
-  display.setMCPType(LTI_TYPE_MCP23017);
+//  display.setMCPType(LTI_TYPE_MCP23017);
   display.begin(16, 2); 
 
 #if SERIAL_LOG_LEVEL > 0
@@ -1019,7 +1023,7 @@ void setup() {
       sequential_mode_tiebreak = DUNNO;
   }
 
-  display.setBacklight(WHITE);
+//  display.setBacklight(WHITE);
   display.clear();
   display.setCursor(0, 0);
   display.print(P("J1772 Hydra"));
@@ -1029,12 +1033,12 @@ void setup() {
   boolean success = SetPinFrequencySafe(CAR_A_PILOT_OUT_PIN, 1000);
   if (!success) {
     log(LOG_INFO, P("SetPinFrequency for car A failed!"));
-    display.setBacklight(YELLOW);
+    //display.setBacklight(YELLOW);
   }
   success = SetPinFrequencySafe(CAR_B_PILOT_OUT_PIN, 1000);
   if (!success) {
     log(LOG_INFO, P("SetPinFrequency for car B failed!"));
-    display.setBacklight(BLUE);
+    ////display.setBacklight(BLUE);
   }
   // In principle, neither of the above two !success conditions should ever
   // happen.
@@ -1044,7 +1048,7 @@ void setup() {
     boolean test_a = digitalRead(CAR_A_RELAY_TEST) == HIGH;
     boolean test_b = digitalRead(CAR_B_RELAY_TEST) == HIGH;
     if (test_a || test_b) {
-      display.setBacklight(RED);
+      //display.setBacklight(RED);
       display.clear();
       display.print(P("Relay Test Failure: "));
       if (test_a) display.print('A');
@@ -1121,18 +1125,18 @@ void loop() {
 
   if (last_car_a_state == STATE_E || last_car_b_state == STATE_E) {
     // One or both cars in error state
-    display.setBacklight(RED);
+    //display.setBacklight(RED);
   } 
   else {
     boolean a = isCarCharging(CAR_A);
     boolean b = isCarCharging(CAR_B);
 
     // Neither car
-    if (!a && !b) display.setBacklight(paused?YELLOW:GREEN);
+//    if (!a && !b) display.setBacklight(paused?YELLOW:GREEN);
     // Both cars
-    else if (a && b) display.setBacklight(VIOLET);
+//    else if (a && b) display.setBacklight(VIOLET);
     // One car or the other
-    else if (a ^ b) display.setBacklight(TEAL);
+//    else if (a ^ b) display.setBacklight(TEAL);
   }
 
   // Check proximity
@@ -1500,6 +1504,3 @@ void loop() {
   }
   
 }
-
-
-
