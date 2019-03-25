@@ -155,9 +155,9 @@
 // 10 volts
 #define STATE_B_MAX      869
 // 8 volts
-#define STATE_B_MIN      775
+#define STATE_B_MIN      780
 // 7 volts
-#define STATE_C_MAX      774
+#define STATE_C_MAX      779
 // 5 volts
 #define STATE_C_MIN      682
 // 4 volts
@@ -167,7 +167,7 @@
 // This represents 0 volts. No, it's not 512. Deal.
 #define PILOT_0V         556
 // -10 volts. We're fairly generous.
-#define PILOT_DIODE_MAX  250
+#define PILOT_DIODE_MAX  320
 
 // This is the amount the incoming pilot needs to change for us to react (in milliamps).
 #define PILOT_FUZZ 500
@@ -251,7 +251,7 @@
 // Each count of the A/d converter is 4.882 mV (5/1024). V/A divided by V/unit is unit/A. For the reference
 // design, that's 9.46. But we want milliamps per unit, so divide that into 1000. Round up to get...
 // RB = 56: Original reference design
-#define CURRENT_SCALE_FACTOR 89
+#define CURRENT_SCALE_FACTOR 178
 // RB = 47: Current reference design
 //#define CURRENT_SCALE_FACTOR 106
 
@@ -264,8 +264,8 @@
 // We're going to use this sort of "log4j" style. The log level is 0 for no logging at all
 // (and if it's 0, the Serial won't be initialized), 1 for info level logging (which will
 // simply include state transitions only), or 2 for debugging.
-#define SERIAL_LOG_LEVEL LOG_INFO
-#define SERIAL_BAUD_RATE 9600
+#define SERIAL_LOG_LEVEL LOG_DEBUG
+#define SERIAL_BAUD_RATE 115200
 
 // in shared mode, two cars connected simultaneously will get 50% of the incoming pilot
 #define MODE_SHARED 0
@@ -749,7 +749,7 @@ void pollIncomingPilot() {
 
 }
 
-void z   unsigned int us, unsigned int car_state) {
+void sequential_mode_transition(unsigned int us, unsigned int car_state) {
   unsigned int them = (us == CAR_A)?CAR_B:CAR_A;
   unsigned int *last_car_state = (us == CAR_A)?&last_car_a_state:&last_car_b_state;
   unsigned int their_state = (us == CAR_A)?last_car_b_state:last_car_a_state;
@@ -1110,7 +1110,7 @@ void loop() {
     }
     if ((digitalRead(CAR_B_RELAY_TEST) == LOW) && (relay_state_b == HIGH)) {
       log(LOG_INFO, P("Ground failure detected on car B"));
-      error(CAR_B, 'F);
+      error(CAR_B, 'F');
     }
 #endif
   }
