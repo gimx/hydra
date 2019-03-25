@@ -74,6 +74,7 @@
 #define INCOMING_PROXIMITY_INT  1
 
 #define OUTGOING_PROXIMITY_PIN  4
+#define DCOM_PIN                5
 
 #ifndef SWAP_CARS
 #define CAR_A_PILOT_OUT_PIN     10
@@ -598,14 +599,15 @@ void setPilot(unsigned int car, unsigned int which) {
     log(LOG_TRACE, P("Pin %d to digital %d"), pin, which);
     digitalWrite(pin, which);
   }
-  else if (1){//FIXME (which == DCOM){
-    digitalWrite(pin,12);   
-  }
   else {
     unsigned long ma = incomingPilotMilliamps;
     if (which == HALF) ma /= 2;
     if (ma > MAXIMUM_OUTLET_CURRENT) ma = MAXIMUM_OUTLET_CURRENT;
     unsigned int val = MAtoPwm(ma);
+    // overwrite duty cycle, if the DCOM pin is pulled LOW 
+    if (car==CAR_A && digitalRead(DCOM_PIN)==LOW){
+      val = 12; //representing 5% duty cycle  
+    }
     log(LOG_TRACE, P("Pin %d to PWM %d"), pin, val);
     pwmWrite(pin, val);
   }
@@ -978,6 +980,7 @@ void setup() {
   pinMode(INCOMING_PILOT_PIN, INPUT_PULLUP);
   pinMode(INCOMING_PROXIMITY_PIN, INPUT_PULLUP);
   pinMode(OUTGOING_PROXIMITY_PIN, OUTPUT);
+  pinMode(DCOM_PIN, INPUT_PULLUP);
   pinMode(CAR_A_PILOT_OUT_PIN, OUTPUT);
   pinMode(CAR_B_PILOT_OUT_PIN, OUTPUT);
   pinMode(CAR_A_RELAY, OUTPUT);
