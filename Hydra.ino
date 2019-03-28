@@ -606,7 +606,7 @@ void setPilot(unsigned int car, unsigned int which) {
     unsigned int val = MAtoPwm(ma);
     // overwrite duty cycle, if the DCOM pin is pulled LOW 
     if (car==CAR_A && digitalRead(DCOM_PIN)==LOW){
-      val = 12; //representing 5% duty cycle  
+      val = 13; //representing 5% duty cycle  
     }
     log(LOG_TRACE, P("Pin %d to PWM %d"), pin, val);
     pwmWrite(pin, val);
